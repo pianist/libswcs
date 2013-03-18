@@ -1,0 +1,12 @@
+Pismennost = 0x000008: char = 0x0430 - а
+Pismennost = 0x000002: char = 0x0034 - 4
+Pismennost = 0x000010: char = 0x0391 - Α
+Pismennost = 0x000040: char = 0x0531 - Ա
+Pismennost = 0x000080: char = 0x05d0 - א
+Pismennost = 0x400000: char = 0x342c - 㐬
+     SOURCE: ЁЖИК В ТУМАНЕ MULTIK: Ա
+DESTINATION: ёжик в тумане multik: ա
+Decoded japanese 0xe4 0x65: c = 0x81DA, 臚
+CORRECTED-1, sz = 0: abc абв %DE %AD %BE %EF
+CORRECTED-2, sz = -1: abc абв %DE 
+cs = 0, should be 0
