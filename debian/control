@@ -1,0 +1,17 @@
+Source: libswcs-dev
+Section: devel
+Priority: extra
+Maintainer: Alexander Pankov <pianist@usrsrc.ru>
+Standards-Version: 3.7.2
+Homepage: https://github.com/bachan/coda
+
+Package: libswcs-dev
+Architecture: any
+Section: libdevel
+Depends: ${shlibs:Depends},
+         libc6 (>= 2.4),
+         libgcc1 (>= 1:4.1.1),
+         libstdc++6 (>= 4.6.3),
+Description: swcs developement library
+  Swallow charset library: utilities for charsets and strings
+
