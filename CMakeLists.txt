@@ -16,6 +16,9 @@ AUX_SOURCE_DIRECTORY (test/ SRC_TEST_SWCS)
 ADD_EXECUTABLE (test_swcs ${SRC_TEST_SWCS})
 TARGET_LINK_LIBRARIES (test_swcs swcs)
 
+ADD_EXECUTABLE (swcs_charstat utils/charstat.cpp)
+TARGET_LINK_LIBRARIES (swcs_charstat swcs)
+
 INSTALL (FILES swcs/charset.h DESTINATION include/swcs)
 INSTALL (TARGETS swcs DESTINATION ${LIBDIR})
 
