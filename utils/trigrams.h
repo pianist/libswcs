@@ -3,11 +3,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <swcs/charset.h>
-//#include <string>
 #include <string.h>
-//#include <iostream>
 #include <map>
+
+#include <swcs/charset.h>
 
 union trigram_t {
     uint64_t _all;
@@ -66,7 +65,7 @@ public:
     }
 
     void process(const char * line)
-    {
+    {          
         trigram_t curr_trigram;
         while(*line) {
             unsigned sz; 
@@ -74,7 +73,10 @@ public:
             line += sz;
 
             if(ch) {
-                push_char(ch);
+                if(ch == ' ')
+                    reset();
+                else
+                    push_char(ch);
             }
         }
     }
