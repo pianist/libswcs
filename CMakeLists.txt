@@ -19,6 +19,10 @@ TARGET_LINK_LIBRARIES (test_swcs swcs)
 ADD_EXECUTABLE (swcs_charstat utils/charstat.cpp)
 TARGET_LINK_LIBRARIES (swcs_charstat swcs)
 
+SET (SRC_GEN_TRIGRAMS utils/gen.cpp)
+ADD_EXECUTABLE (gen_tri ${SRC_GEN_TRIGRAMS})
+TARGET_LINK_LIBRARIES (gen_tri swcs)
+ 
 INSTALL (FILES swcs/charset.h DESTINATION include/swcs)
 INSTALL (TARGETS swcs DESTINATION ${LIBDIR})
 
