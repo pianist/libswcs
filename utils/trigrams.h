@@ -55,6 +55,8 @@ class trigrams_holder
     tri_map_t trigrams;
     trigram_t cur_trig;
     int pos;
+    std::map<uint32_t,uint32_t> cstats;
+
 public:
     trigrams_holder() 
         : pos(0) 
@@ -63,24 +65,40 @@ public:
     {
         pos = 0;
     }
-
+    
+    tri_map_t& get()
+    {
+        return trigrams;
+    }
+    
+    const tri_map_t& get()const
+    {
+        return trigrams;
+    }
+    
     void process(const char * line)
     {          
         trigram_t curr_trigram;
-        while(*line) {
-            unsigned sz; 
-            uint16_t ch = swcs_tolower(swcs_get_char(line, &sz));  
-            line += sz;
 
-            if(ch) {
-                if(ch == ' ')
+        while(*line) {
+            unsigned sz;
+            uint16_t c = swcs_get_char(line, &sz);
+            line += sz;
+            
+            uint16_t chl = swcs_tolower(c);  
+
+            // maybe we should allow ' ' as start/end char in trigrams?
+            if(chl) {
+                if(chl == ' ')
                     reset();
-                else
-                    push_char(ch);
+                else {
+                    cstats[swcs_get_char_properties(c)->cpismennost]++;
+                    push_char(chl);
+                }
             }
         }
     }
-
+    
     void push_char(uint16_t ch)
     {
         if(pos < 2)
@@ -97,7 +115,7 @@ public:
     {   
         for(tri_map_t::const_iterator i = trigrams.begin(); i != trigrams.end(); ++i) {
             i->first.print();
-            printf("\t%.6f\n", i->second);  
+            printf("\t%.10f\n", i->second);  
         }    
     }
 
@@ -108,10 +126,28 @@ public:
             i->second /= sz;
         }
     }
+    
+    uint32_t chars_count(uint32_t pism)const
+    {
+        std::map<uint32_t, uint32_t>::const_iterator i = cstats.find(pism);
+        if(i != cstats.end()) 
+            return i->second;
+        else
+            return 0;
+    }
+    
+    uint32_t chars_count()const
+    {
+        uint32_t res = 0;
+        for(std::map<uint32_t, uint32_t>::const_iterator i = cstats.begin(); i != cstats.end(); ++i)
+        {
+            res += i->second;
+        }
+        return res;
+    }
 
     void load(char * line)
     {
-        trigrams.clear();
         char * tab = strchr(line, '\t');
         if(tab) {
             trigram_t tr;
@@ -124,8 +160,9 @@ public:
                 line += sz;
                 tr.chars[i] = ch;
             }
-            if(i == 3)
+            if(i == 3) {
                 trigrams[tr] = w;
+            }
         }
     }
 
