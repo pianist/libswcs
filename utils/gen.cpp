@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <swcs/charset.h>
 #include <string>
 #include <iostream>
@@ -16,7 +18,7 @@ int main(int argc, char* argv[])
     }
     
     th.norm();
-    th.print();
+    th.write(argv[1], argv[2]);
    
     return 0;
 }

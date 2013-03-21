@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <map>
 
 #include <swcs/charset.h>
@@ -28,12 +29,12 @@ union trigram_t {
         _all = 0;
     }
 
-    void print()const
+    void print(FILE * fp)const
     {         
         char str[8];
         for(int i = 0; i < 3; i++) {
             unsigned r = swcs_put_char(str, chars[i]);
-            printf("%.*s", r, str); 
+            fprintf(fp, "%.*s", r, str); 
         }
     }
 };
@@ -52,101 +53,128 @@ typedef std::map<trigram_t, double> tri_map_t;
 
 class trigrams_holder
 {
-    tri_map_t trigrams;
-    trigram_t cur_trig;
-    int pos;
-    std::map<uint32_t,uint32_t> cstats;
+    tri_map_t cyr_trigrams;
+    tri_map_t lat_trigrams;
+    
+    trigram_t cyr_t;
+    trigram_t lat_t;
+    int cyr_pos;
+    int lat_pos;
+    
+    uint32_t curr_writing;
+    
 
 public:
+    uint32_t cyr_stats;
+    uint32_t lat_stats;
+    uint32_t com_stats;
+    
     trigrams_holder() 
-        : pos(0) 
-    {}
-    void reset()
-    {
-        pos = 0;
-    }
-    
-    tri_map_t& get()
-    {
-        return trigrams;
-    }
-    
-    const tri_map_t& get()const
-    {
-        return trigrams;
-    }
+        : cyr_pos(0)
+        , lat_pos(0)
+        , curr_writing(0)
+        , cyr_stats(0) 
+        , lat_stats(0) 
+        , com_stats(0) 
+    {}                    
     
     void process(const char * line)
     {          
-        trigram_t curr_trigram;
-
         while(*line) {
             unsigned sz;
             uint16_t c = swcs_get_char(line, &sz);
             line += sz;
             
+            const struct swcs_char_properties* prop = swcs_get_char_properties(c);
             uint16_t chl = swcs_tolower(c);  
 
-            // maybe we should allow ' ' as start/end char in trigrams?
             if(chl) {
-                if(chl == ' ')
-                    reset();
-                else {
-                    cstats[swcs_get_char_properties(c)->cpismennost]++;
-                    push_char(chl);
+                uint32_t writing = prop->cpismennost;
+                if(writing == SW_WP_COMBINING)
+                    writing = curr_writing;
+                
+                switch(writing) {
+                    case SW_WP_CYRILLIC:
+                        cyr_stats++;
+                        push_cyr_char(chl);
+                        lat_pos = 0;
+                        break;
+                    case SW_WP_LATIN:
+                        lat_stats++;
+                        push_lat_char(chl);
+                        cyr_pos = 0;
+                        break;
+                    default:
+                        cyr_pos = 0;
+                        lat_pos = 0;
+                        break;
                 }
+                com_stats++;
+                curr_writing = prop->cpismennost;
             }
         }
     }
     
-    void push_char(uint16_t ch)
+    void push_cyr_char(uint16_t ch)
     {
-        if(pos < 2)
-            cur_trig.chars[pos + 1] = ch;
+        if(cyr_pos < 2)
+            cyr_t.chars[cyr_pos + 1] = ch;
         else {
-            trigram_t tr(cur_trig.chars[1],cur_trig.chars[2], ch);
-            trigrams[tr]++;
-            cur_trig = tr;
+            trigram_t tr(cyr_t.chars[1], cyr_t.chars[2], ch);
+            cyr_trigrams[tr]++;
+            cyr_t = tr;
         }
-        pos++;
+        cyr_pos++;
+    }
+    
+    void push_lat_char(uint16_t ch)
+    {
+        if(lat_pos < 2)
+            lat_t.chars[lat_pos + 1] = ch;
+        else {
+            trigram_t tr(lat_t.chars[1], lat_t.chars[2], ch);
+            lat_trigrams[tr]++;
+            lat_t = tr;
+        }
+        lat_pos++;
+    }
+ 
+    void write(const char * fn, const tri_map_t& tri)const
+    {   
+        FILE * fp = fopen(fn, "wt");
+        if(fp) {
+            for(tri_map_t::const_iterator i = tri.begin(); i != tri.end(); ++i) {
+                i->first.print(fp);
+                fprintf(fp, "\t%.10f\n", i->second);  
+            }
+        } else { 
+            fprintf(stderr, "can't open %s: (%d) %s\n", fn, errno, strerror(errno));
+        }
+    }
+    
+    void write(const char * fn_cyr, const char * fn_lat)const
+    {   
+        write(fn_cyr, cyr_trigrams);
+        write(fn_lat, lat_trigrams);
     }
 
-    void print()const
-    {   
-        for(tri_map_t::const_iterator i = trigrams.begin(); i != trigrams.end(); ++i) {
-            i->first.print();
-            printf("\t%.10f\n", i->second);  
-        }    
+    void norm(tri_map_t& tr)
+    {
+        size_t sz = tr.size();
+        if(sz) {
+            for(tri_map_t::iterator i = tr.begin(); i != tr.end(); ++i) {
+                i->second /= sz;
+            }
+        }   
     }
 
     void norm()
     {
-        size_t sz = trigrams.size();
-        for(tri_map_t::iterator i = trigrams.begin(); i != trigrams.end(); ++i) {
-            i->second /= sz;
-        }
+        norm(cyr_trigrams);
+        norm(lat_trigrams);
     }
-    
-    uint32_t chars_count(uint32_t pism)const
-    {
-        std::map<uint32_t, uint32_t>::const_iterator i = cstats.find(pism);
-        if(i != cstats.end()) 
-            return i->second;
-        else
-            return 0;
-    }
-    
-    uint32_t chars_count()const
-    {
-        uint32_t res = 0;
-        for(std::map<uint32_t, uint32_t>::const_iterator i = cstats.begin(); i != cstats.end(); ++i)
-        {
-            res += i->second;
-        }
-        return res;
-    }
-
-    void load(char * line)
+   
+    void load(char * line, tri_map_t& t)
     {
         char * tab = strchr(line, '\t');
         if(tab) {
@@ -161,21 +189,41 @@ public:
                 tr.chars[i] = ch;
             }
             if(i == 3) {
-                trigrams[tr] = w;
+                t[tr] = w;
             }
         }
+    } 
+    
+    void load(char * line_cyr, char * line_lat)
+    {            
+        load(line_cyr, cyr_trigrams);
+        load(line_lat, lat_trigrams);
     }
-
-    double distance(const trigrams_holder& other)const
+    
+    double distance(const tri_map_t& th, const tri_map_t& oth)const
     {
         double sum = 0;
-        for(tri_map_t::const_iterator i = trigrams.begin(); i != trigrams.end(); ++i) {
-            tri_map_t::const_iterator f = other.trigrams.find(i->first); 
-            if(f != other.trigrams.end()) {
+        for(tri_map_t::const_iterator i = th.begin(); i != th.end(); ++i) {
+            tri_map_t::const_iterator f = oth.find(i->first); 
+            if(f != oth.end()) {
                 sum += i->second * f->second;
             }
         }
         return sum;
+    }
+    
+    void distance(const trigrams_holder& other, double& w_cyr, double& w_lat)const
+    {   
+        w_cyr = 0;
+        w_lat = 0;
+        
+        if(cyr_stats  > 0.3 * com_stats) {
+            w_cyr = distance(cyr_trigrams, other.cyr_trigrams);
+        }
+        
+        if(lat_stats  > 0.3 * com_stats) {
+            w_lat = distance(lat_trigrams, other.lat_trigrams);
+        }
     }
 };
 
