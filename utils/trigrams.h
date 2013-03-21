@@ -78,6 +78,19 @@ public:
         , com_stats(0) 
     {}                    
     
+    void clear()
+    {
+        cyr_pos = 0;
+        lat_pos = 0;
+        curr_writing = 0;
+        cyr_stats = 0;
+        lat_stats = 0;
+        com_stats = 0;
+        
+        cyr_trigrams.clear();
+        lat_trigrams.clear();
+    }
+
     void process(const char * line)
     {          
         while(*line) {
@@ -174,30 +187,29 @@ public:
         norm(lat_trigrams);
     }
    
-    void load(char * line, tri_map_t& t)
+    void load(char * line, double w, tri_map_t& t)
     {
-        char * tab = strchr(line, '\t');
-        if(tab) {
-            trigram_t tr;
-            double w = atof(tab + 1);
-            *tab = 0;
-            int i;
-            for(i = 0; i < 3 && *line; i++) {
-                unsigned sz; 
-                uint16_t ch = swcs_tolower(swcs_get_char(line, &sz));  
-                line += sz;
-                tr.chars[i] = ch;
-            }
-            if(i == 3) {
-                t[tr] = w;
-            }
+        trigram_t tr;
+        int i;
+        for(i = 0; i < 3 && *line; i++) {
+            unsigned sz; 
+            uint16_t ch = swcs_tolower(swcs_get_char(line, &sz));  
+            line += sz;
+            tr.chars[i] = ch;
+        }
+        if(i == 3) {
+            t[tr] = w;
         }
     } 
     
-    void load(char * line_cyr, char * line_lat)
+    void load_cyr(char * line_cyr, double w)
     {            
-        load(line_cyr, cyr_trigrams);
-        load(line_lat, lat_trigrams);
+        load(line_cyr, w, cyr_trigrams);
+    }
+
+    void load_lat(char * line_lat, double w)
+    {
+        load(line_lat, w, lat_trigrams);
     }
     
     double distance(const tri_map_t& th, const tri_map_t& oth)const
@@ -227,4 +239,70 @@ public:
     }
 };
 
+class trigrams_classifier
+{
+    typedef std::map<int, trigrams_holder> trigrams_collection_type;
+    trigrams_collection_type trigrams;
+
+public:
+    bool load(const char * fn)
+    {
+        FILE * fp = fopen(fn, "rt");
+        if(fp) {
+            char line[8192];
+            while(!feof(fp)) {
+                if(fgets(line, 8191, fp)) {
+                    char * symc = strchr(line, '\t');
+                    if(symc) {
+                        *symc++ = '\0';
+                        char * langc = strchr(symc, '\t');
+                        if(langc) {
+                            *langc++ = '\0';
+                            char * wc = strchr(langc, '\t');
+                            if(wc) {
+                                *wc++ = '\0';
+                                int cyr = atoi(symc);
+                                int lang = atoi(langc);
+                                double w = atof(wc);
+
+                                if(cyr)
+                                    trigrams[lang].load_cyr(line, w);
+                                else
+                                    trigrams[lang].load_lat(line, w);
+                            }
+                        }
+                    }
+                }
+            }        
+            fclose(fp);
+            return true;
+        } else {
+            fprintf(stderr, "can't open %s: (%d) %s\n", fn, errno, strerror(errno));
+            return false;
+        }
+    }
+ 
+    void classify(trigrams_holder& th, int& lcyr, double& wcyr, int& llat, double& wlat)
+    {
+        lcyr = -1;
+        llat = -1;
+        wcyr = 0;
+        wlat = 0;
+
+        for(trigrams_collection_type::const_iterator i = trigrams.begin(); i != trigrams.end(); ++i) {
+            double cur_cyr, cur_lat;
+            th.distance(i->second, cur_cyr, cur_lat);
+            
+            if(cur_cyr > wcyr) {
+                wcyr = cur_cyr;
+                lcyr = i->first;
+            }
+            
+            if(cur_lat > wlat) {
+                wlat = cur_lat;
+                llat = i->first;
+            }
+        }    
+    }
+};
 #endif

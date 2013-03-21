@@ -5,35 +5,32 @@
 
 #include "trigrams.h"
 
-std::vector<trigrams_holder> trigrams;
-
 int main(int argc, char* argv[])
-{
-    std::string line;
-    trigrams_holder th;
-
-    for(int i = 1; i < argc; i++) {
-        trigrams.push_back(trigrams_holder());
-        
-        std::ifstream ifs(argv[i]);
-        while(std::getline(ifs, line)) {
-            trigrams.back().load((char*)line.c_str());
-        }
+{   
+    if(argc == 1) {
+        std::cerr << "usage: " << argv[0] << " trigram_file" << std::endl;
+        return -1;
     }
 
+    std::string line;
+    trigrams_holder th;
     while(std::getline(std::cin, line)) {
         th.process(line.c_str());
     }
-   
-    if(th.chars_count()) { 
-        printf("#(CYR): %d of %d\n", th.chars_count(SW_WP_CYRILLIC), th.chars_count());
-        printf("#(LAT): %d of %d\n", th.chars_count(SW_WP_LATIN), th.chars_count());
-        
-        th.norm();    
-        for(int i = 1; i < argc; i++) {
-            double res = th.distance(trigrams[i - 1]);
-            std::cout << argv[i] << "\t" << res << std::endl;
-        } 
+    th.norm();    
+    
+    trigrams_classifier tc;
+    if(tc.load(argv[1])) {
+        int lcyr, llat;
+        double wcyr, wlat;
+        tc.classify(th, lcyr, wcyr, llat, wlat);
+        if(wcyr > 0) {
+            std::cout << "Cyr." << lcyr << ":" << wcyr << std::endl;
+        }
+        if(wlat > 0) {
+            std::cout << "Lat." << llat << ":" << wlat << std::endl;
+        }
     }
+
     return 0;
 }
