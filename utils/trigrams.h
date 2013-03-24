@@ -99,13 +99,12 @@ public:
             line += sz;
             
             const struct swcs_char_properties* prop = swcs_get_char_properties(c);
+            uint32_t writing = prop->cpismennost;
+            if (writing == SW_WP_COMBINING) continue;
+
             uint16_t chl = swcs_tolower(c);  
 
             if(chl) {
-                uint32_t writing = prop->cpismennost;
-                if(writing == SW_WP_COMBINING)
-                    writing = curr_writing;
-                
                 switch(writing) {
                     case SW_WP_CYRILLIC:
                         cyr_stats++;

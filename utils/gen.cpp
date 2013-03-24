@@ -10,6 +10,11 @@
 
 int main(int argc, char* argv[])
 {
+    if (argc != 3) {
+        std::cerr << "Usage: ./gen_tri cyr_out.txt lat_out.txt\n";
+        return -1;
+    }
+
     std::string line;
     trigrams_holder th;
 
@@ -22,3 +27,4 @@ int main(int argc, char* argv[])
    
     return 0;
 }
+
