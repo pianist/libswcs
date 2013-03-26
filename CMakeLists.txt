@@ -27,7 +27,7 @@ SET (SRC_TEST_TRIGRAMS utils/test_tri.cpp)
 ADD_EXECUTABLE (test_tri ${SRC_TEST_TRIGRAMS})
 TARGET_LINK_LIBRARIES (test_tri swcs)
 
-ADD_EXECUTABLE (test_tokenizer test_tokenizer/main.c)
+ADD_EXECUTABLE (test_tokenizer test/test_tokenizer/main.c)
 TARGET_LINK_LIBRARIES (test_tokenizer swcs)
   
 INSTALL (FILES swcs/charset.h DESTINATION include/swcs)

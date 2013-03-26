@@ -1,6 +1,6 @@
 Summary: 	swcs developement library
 Name: 		libswcs-devel
-Version: 	0.1.0
+Version: 	0.2.0
 Release: 	0%{?dist}
 License: 	LGPL
 Source: 	libswcs-%{version}.tar.gz
@@ -32,6 +32,9 @@ rm -rf %{buildroot}
 %{_libdir}/libswcs.a
 
 %changelog
+* Tue Mar 26 2013 Alexander Pankov <pianist@usrsrc.ru> - 0.2.0
++ tokenization
+
 * Mon Mar 17 2013 Alexander Pankov <pianist@usrsrc.ru> - 0.1.0
 + First RPM package
 
