@@ -22,9 +22,9 @@ extern "C" {
 
 #define SW_UI_UNDEF  0
 #define SW_UI_LOWER  1  /* e or example */
-#define SW_UI_FIRST  2  /* - or Example */
+#define SW_UI_UPPER  2  /* E or EXAMPLE */
 #define SW_UI_MIXED  3  /* - or eXamPLe */
-#define SW_UI_UPPER  4  /* E or EXAMPLE */
+#define SW_UI_FIRST  4  /* - or Example */
 
 #define SW_CS_UTF8       0
 #define SW_CS_SHIFT_JIS  1
