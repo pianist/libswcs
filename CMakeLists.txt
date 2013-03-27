@@ -30,6 +30,6 @@ TARGET_LINK_LIBRARIES (test_tri swcs)
 ADD_EXECUTABLE (test_tokenizer test/test_tokenizer/main.c)
 TARGET_LINK_LIBRARIES (test_tokenizer swcs)
   
-INSTALL (FILES swcs/charset.h DESTINATION include/swcs)
+INSTALL (FILES swcs/charset.h swcs/tokenizer.h DESTINATION include/swcs)
 INSTALL (TARGETS swcs DESTINATION ${LIBDIR})
 

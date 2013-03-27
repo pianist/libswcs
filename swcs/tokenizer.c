@@ -269,6 +269,8 @@ void swcs_parse_text(const char* s, swcs_next_token cb, void* user_data)
 		prev_c = c;
 	}
 
+	push_back_token(&st, tok_start, s - tok_start, letter_count, cur_pismennost, cur_case);
+
 	push_break(&st);
 }
 
