@@ -67,8 +67,35 @@ void test_5()
     printf("cs = %d, should be 0\n", cs);
 }
 
+void test_0(const char* fname)
+{
+    FILE* f= fopen(fname, "r");
+
+    unsigned sz = 0;
+    char buf[65536];
+
+    while (!feof(f) && sz < 65530)
+    {
+        char* ptr = buf + sz;
+        if (fgets(ptr, 65536 - sz, f))
+        {
+            sz += strlen(ptr);
+        }
+    }
+    int cs = swcs_charset_guess(buf, strlen(buf));
+    printf("cs = %d\n", cs);
+
+    fclose(f);
+}
+
 int main(int argc, char** argv)
 {
+    if (argc == 2)
+    {
+        test_0(argv[1]);
+        return 0;
+    }
+
     test_1();
     test_2();
     test_3();

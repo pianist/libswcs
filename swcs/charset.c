@@ -246,6 +246,8 @@ int swcs_charset_guess(const char *s, size_t sz)
 
     if (!broken_utf) return SW_CS_UTF8;
 
+    if ((broken_utf < 5) && (rus > 1000)) return SW_CS_UTF8;
+
 //printf("broken_utf = %u, w_all = %u, wup = %u, rus = %u\n", broken_utf, w_all, wup, rus);
     if ((10 * w_all > 9 * rus) && (wup * 5 < w_all))
     {
