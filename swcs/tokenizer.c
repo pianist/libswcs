@@ -213,6 +213,7 @@ static void push_break(__tokenizer_state_t* st)
 	uint32_t i;
 	for (i = 0; i < st->buffered; ++i)
 	{
+		// TODO if -1: split by -
 		st->cb(&st->tokens[i], st->user_data);
 	}
 
@@ -261,7 +262,17 @@ void swcs_parse_text(const char* s, swcs_next_token cb, void* user_data)
 		}
 
 		cur_pismennost |= cur_cpismennost;
-		if (!cur_case && (SW_UI_UPPER == cur_ccase)) cur_case = SW_UI_FIRST;
+		if (SW_UI_UPPER == cur_ccase)
+		{
+			if (!cur_case)
+			{
+				cur_case = SW_UI_FIRST;
+			}
+			else
+			{
+				cur_case &= ~SW_UI_FIRST;
+			}
+		}
 		cur_case |= cur_ccase;
 
 		s += sz;
